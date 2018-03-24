@@ -19,7 +19,9 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 
     public JWTAuthorizationFilter(AuthenticationManager authenticationManager) {
+        
         super(authenticationManager);
+        
     }
 
     @Override
@@ -30,33 +32,18 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
     ) throws IOException, ServletException {
 
         String header = request.getHeader(HEADER_STRING);
+        
+        SecurityContextHolder.getContext().setAuthentication(null);
 
         if (header == null || !header.startsWith(TOKEN_PREFIX)) {
             
-            ObjectMapper mapper = new ObjectMapper();
-            JWTResponse jwtResponse = new JWTErrorResponse("token_not_provided");
-            
-            response.setContentType("application/json");
-            response.getWriter().write( mapper.writeValueAsString(jwtResponse) );
+            filterChain.doFilter(request, response);
             
             return;
             
         }
 
         UsernamePasswordAuthenticationToken authentication = getAuthentication(request);
-        
-        if ( authentication == null ) {
-            
-            ObjectMapper mapper = new ObjectMapper();
-            JWTResponse jwtResponse = new JWTErrorResponse("token_not_provided");
-            
-            response.setContentType("application/json");
-            response.getWriter().write( mapper.writeValueAsString(jwtResponse) );
-            
-            return;
-            
-        }
-        
         SecurityContextHolder.getContext().setAuthentication(authentication);
         filterChain.doFilter(request, response);
 
