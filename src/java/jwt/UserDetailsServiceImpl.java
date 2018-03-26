@@ -1,6 +1,5 @@
 package jwt;
 
-import jwt.UserRepository;
 import static java.util.Collections.emptyList;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
