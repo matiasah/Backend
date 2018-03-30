@@ -54,10 +54,10 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
 
         } catch (IOException e) {
 
-            throw new RuntimeException(e);
-
         }
-
+        
+        return null;
+        
     }
 
     @Override

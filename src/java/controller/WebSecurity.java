@@ -1,5 +1,6 @@
 package controller;
 
+import java.util.Arrays;
 import jwt.JWTAuthenticationEntryPoint;
 import jwt.UserDetailsServiceImpl;
 import jwt.JWTAuthenticationFilter;
@@ -18,6 +19,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
 @Configuration
 @EnableWebSecurity //(debug=true)
@@ -27,12 +32,21 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
     private final UserDetailsService        userDetailsService;
     private final BCryptPasswordEncoder     bCryptPasswordEncoder;
     private final AuthenticationEntryPoint  authenticationEntryPoint;
+    private final UrlBasedCorsConfigurationSource   corsConfigurationSource;
 
     public WebSecurity() {
 
         this.userDetailsService = new UserDetailsServiceImpl();
         this.bCryptPasswordEncoder = new BCryptPasswordEncoder();
         this.authenticationEntryPoint = new JWTAuthenticationEntryPoint();
+        
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList("*", "localhost"));
+        configuration.setAllowedHeaders(Arrays.asList("Content-Type", "Authorization"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        
+        this.corsConfigurationSource = new UrlBasedCorsConfigurationSource();
+        this.corsConfigurationSource.registerCorsConfiguration("/**", configuration);
 
     }
     
@@ -50,11 +64,26 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
     public AuthenticationEntryPoint getAuthenticationEntryPoint() {
         return this.authenticationEntryPoint;
     }
+    
+    @Bean
+    public CorsConfigurationSource getCorsConfigurationSource() {
+        
+        return this.corsConfigurationSource;
+        
+    }
+    
+    @Bean(name = "mvcHandlerMappingIntrospector")
+    public HandlerMappingIntrospector mvcHandlerMappingInstrospector() {
+        return new HandlerMappingIntrospector();
+    }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         
-        http.csrf().disable().authorizeRequests()
+        http
+                .csrf().disable()
+                .cors().configurationSource(getCorsConfigurationSource()).and()
+                .authorizeRequests()
                 .antMatchers("/*").permitAll()
                 .antMatchers(HttpMethod.POST, LOGIN_URL).permitAll()
                 .anyRequest().authenticated()
